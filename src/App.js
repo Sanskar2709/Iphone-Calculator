@@ -1,6 +1,6 @@
 import React from "react";
 import { useState } from "react";
-import { evaluate } from "mathjs";
+//import { evaluate } from "mathjs";
 import "./index.css";
 
 const App = () => {
@@ -18,7 +18,9 @@ const App = () => {
   const handleClick = (value) => {
     if (value === "=") {
       try {
-        setResult(evaluate(expression).toString());
+        // Replace '÷' with '/' and '×' with '*'
+        const sanitizedExpression = expression.replace(/÷/g, '/').replace(/×/g, '*');
+        setResult(eval(sanitizedExpression).toString());
       } catch {
         setResult("Error");
       }
