@@ -1,6 +1,4 @@
-import React from "react";
-import { useState } from "react";
-//import { evaluate } from "mathjs";
+import React, { useState, useCallback, useMemo } from "react";
 import "./index.css";
 
 const App = () => {
@@ -15,34 +13,46 @@ const App = () => {
     ["0", ".", "="],
   ];
 
-  const handleClick = (value) => {
-    if (value === "=") {
-      try {
-        // Replace '÷' with '/' and '×' with '*'
-        const sanitizedExpression = expression.replace(/÷/g, '/').replace(/×/g, '*');
-        setResult(eval(sanitizedExpression).toString());
-      } catch {
-        setResult("Error");
-      }
-    } else if (value === "AC") {
-      setExpression("");
-      setResult("0");
-    } else if (value === "+/-") {
-      setExpression((prev) =>
-        prev.startsWith("-") ? prev.slice(1) : "-" + prev
-      );
-    } else if (value === "x") {
-      setExpression((prev) => prev + "*");
-    } else if (value === "÷") {
-      setExpression((prev) => prev + "/");
-    } else {
-      setExpression((prev) => prev + value);
+  // Memoize the result calculation to avoid recalculating on every render
+  const memoizedResult = useMemo(() => {
+    if (expression === "") return "0";
+    try {
+      // Replace '÷' with '/' and '×' with '*'
+      const sanitizedExpression = expression
+        .replace(/÷/g, "/")
+        .replace(/×/g, "*");
+      return eval(sanitizedExpression).toString();
+    } catch {
+      return "Error";
     }
-  };
+  }, [expression]);
+
+  // Memoize the handleClick function to avoid unnecessary re-creations
+  const handleClick = useCallback(
+    (value) => {
+      if (value === "=") {
+        setResult(memoizedResult); // Use memoized result
+      } else if (value === "AC") {
+        setExpression("");
+        setResult("0");
+      } else if (value === "+/-") {
+        setExpression((prev) =>
+          prev.startsWith("-") ? prev.slice(1) : "-" + prev
+        );
+      } else if (value === "x") {
+        setExpression((prev) => prev + "*");
+      } else if (value === "÷") {
+        setExpression((prev) => prev + "/");
+      } else {
+        setExpression((prev) => prev + value);
+      }
+    },
+    [memoizedResult] // Add memoizedResult as a dependency
+  );
 
   return (
     <div className="flex justify-center items-center h-screen bg-black">
-      <div className="bg-black w-80 h- [500px] rounded-lg p-4">
+      <div className="bg-black w-80 h-[500px] rounded-lg p-4">
         {/* Display sec */}
         <div className="text-white text-right text-4xl p-5 bg-black h-24">
           <div className="text-gray-400 text-lg">{expression}</div>
@@ -55,7 +65,7 @@ const App = () => {
             <button
               key={btn}
               onClick={() => handleClick(btn)}
-             className={`text-3xl rounded-full w-30 h-20  ${
+              className={`text-3xl rounded-full w-30 h-20  ${
                 ["/", "x", "-", "+", "="].includes(btn)
                   ? "bg-orange-500 text-white"
                   : btn === "AC" || btn === "+/-" || btn === "%"
